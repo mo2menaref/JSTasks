@@ -12,7 +12,6 @@ let medicines = [
 app.get('/api/medicines', (req, res) => {
   res.json(medicines);
 });
-
 app.get('/api/medicines/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const medicine = medicines.find(med => med.id === id);
