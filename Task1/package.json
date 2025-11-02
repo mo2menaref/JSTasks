@@ -1,8 +1,11 @@
 {
   "name": "task1",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
+  "type": "module",
   "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -10,7 +13,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^5.1.0",
-    "express-validator": "^7.3.0"
+    "express-validator": "^7.3.0",
+    "mongoose": "^8.19.2"
   }
 }

@@ -1,0 +1,5 @@
+User for database and project: momenaref4_db_user
+Cluster pass:RV5TJFznt6GP49YL
+
+
+Database pass: BCm6f0JMoWSKCmXx
