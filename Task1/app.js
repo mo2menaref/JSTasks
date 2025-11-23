@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import connectMongo from "./config/connect_database.js";
 import taskRoutes from "./route/taskRoute.js";
 
@@ -13,7 +14,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.json()); 
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json());
 
 // Routes
 app.use("/tasks", taskRoutes);

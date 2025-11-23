@@ -1,59 +1,76 @@
-import tasks from "../models/taskModels.js";
+import Task from "../models/taskModels.js";
+import { asyncHandler } from "../utils/helpers.js";
 
-export const getAllTasks = (req, res) => {
-    res.json({ completed: true, tasks });
-};
+export const getAllTasks = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
-export const getTask = (req, res) => {
+    const tasks = await Task.find().skip(skip).limit(limit);
+    const total = await Task.countDocuments();
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+        completed: true,
+        tasks,
+        pagination: {
+            currentPage: page,
+            totalPages,
+            totalTasks: total,
+            tasksPerPage: limit,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
+        }
+    });
+});
+
+export const getTask = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const task = tasks.find(t => t.id == id);
+    const task = await Task.findById(id);
     
     if (!task) {
-        return res.json({ completed: false, message: "Task not found" });
+        return res.status(404).json({ completed: false, message: "Task not found" });
     }
     
     res.json({ completed: true, task });
-};
+});
 
-export const createTask = (req, res) => {
+export const createTask = asyncHandler(async (req, res) => {
     const { title, description } = req.body;
     
-    const newTask = {
-        id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+    const newTask = new Task({
         title,
-        description: description || null,
-        completed: false
-    };
+        description: description || null
+    });
     
-    tasks.push(newTask);
-    res.json({ completed: true, task: newTask });
-};
+    const savedTask = await newTask.save();
+    res.status(201).json({ completed: true, task: savedTask });
+});
 
-export const updateTask = (req, res) => {
+export const updateTask = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const taskIndex = tasks.findIndex(t => t.id == id);
-    
-    if (taskIndex === -1) {
-        return res.json({ completed: false, message: "Task not found" });
-    }
-    
     const { title, description, completed } = req.body;
     
-    if (title) tasks[taskIndex].title = title;
-    if (description !== undefined) tasks[taskIndex].description = description;
-    if (completed !== undefined) tasks[taskIndex].completed = completed;
+    const updatedTask = await Task.findByIdAndUpdate(
+        id,
+        { title, description, completed },
+        { new: true, runValidators: true }
+    );
     
-    res.json({ completed: true, task: tasks[taskIndex] });
-};
-
-export const deleteTask = (req, res) => {
-    const { id } = req.params;
-    const taskIndex = tasks.findIndex(t => t.id == id);
-    
-    if (taskIndex === -1) {
-        return res.json({ completed: false, message: "Task not found" });
+    if (!updatedTask) {
+        return res.status(404).json({ completed: false, message: "Task not found" });
     }
     
-    tasks.splice(taskIndex, 1);
+    res.json({ completed: true, task: updatedTask });
+});
+
+export const deleteTask = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const deletedTask = await Task.findByIdAndDelete(id);
+    
+    if (!deletedTask) {
+        return res.status(404).json({ completed: false, message: "Task not found" });
+    }
+    
     res.json({ completed: true, message: "Task deleted successfully" });
-};
+});
