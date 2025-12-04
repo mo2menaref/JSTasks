@@ -3,11 +3,12 @@ import { asyncHandler } from "../utils/helpers.js";
 
 export const getAllTasks = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const tasks = await Task.find().skip(skip).limit(limit);
-    const total = await Task.countDocuments();
+    // Only get tasks belonging to the authenticated user
+    const tasks = await Task.find({ user: req.user._id }).skip(skip).limit(limit).populate('user', 'username email');
+    const total = await Task.countDocuments({ user: req.user._id });
     const totalPages = Math.ceil(total / limit);
 
     res.json({
@@ -26,7 +27,7 @@ export const getAllTasks = asyncHandler(async (req, res) => {
 
 export const getTask = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const task = await Task.findById(id);
+    const task = await Task.findOne({ _id: id, user: req.user._id }).populate('user', 'username email');
     
     if (!task) {
         return res.status(404).json({ completed: false, message: "Task not found" });
@@ -40,10 +41,12 @@ export const createTask = asyncHandler(async (req, res) => {
     
     const newTask = new Task({
         title,
-        description: description || null
+        description: description || null,
+        user: req.user._id
     });
     
     const savedTask = await newTask.save();
+    await savedTask.populate('user', 'username email');
     res.status(201).json({ completed: true, task: savedTask });
 });
 
@@ -51,11 +54,11 @@ export const updateTask = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { title, description, completed } = req.body;
     
-    const updatedTask = await Task.findByIdAndUpdate(
-        id,
+    const updatedTask = await Task.findOneAndUpdate(
+        { _id: id, user: req.user._id },
         { title, description, completed },
         { new: true, runValidators: true }
-    );
+    ).populate('user', 'username email');
     
     if (!updatedTask) {
         return res.status(404).json({ completed: false, message: "Task not found" });
@@ -66,7 +69,7 @@ export const updateTask = asyncHandler(async (req, res) => {
 
 export const deleteTask = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const deletedTask = await Task.findByIdAndDelete(id);
+    const deletedTask = await Task.findOneAndDelete({ _id: id, user: req.user._id });
     
     if (!deletedTask) {
         return res.status(404).json({ completed: false, message: "Task not found" });

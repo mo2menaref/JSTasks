@@ -3,22 +3,22 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectMongo from "./config/connect_database.js";
 import taskRoutes from "./route/taskRoute.js";
+import userRoutes from "./route/userRoute.js";
 
-// Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
 connectMongo();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
+app.use(cors());
 app.use(express.json());
 
 // Routes
 app.use("/tasks", taskRoutes);
+app.use("/users", userRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
